@@ -13,22 +13,19 @@ import plumbline.Plumbline;
 import plumbline.PlumblineRuntime;
 
 /**
- * The seatbelt.
+ * Caps the block region {@code SubLevelEntityCollision.collide()} is allowed to walk.
  * <p>
- * {@code SubLevelEntityCollision.collide()} chooses the blocks to test with
- * <pre>BlockPos.betweenClosed(min, max)</pre>
- * and walks the result inside a four-pass loop, never checking how large the region is.
- * When a sub-level's bounds are wrong that region can span tens of millions of blocks,
- * so one entity move iterates effectively forever. Measured in the wild: a single region
- * of 155x985x379 (~57.9 million blocks) and server ticks wedged for 207 seconds, caused
- * by six entities.
+ * collide() builds its candidate set with {@code BlockPos.betweenClosed(min, max)} and
+ * iterates it in a four pass loop without checking the size. If the sub-level's bounds
+ * are wrong that region can cover tens of millions of positions, so one entity move
+ * never finishes. Seen on a real world: 155x985x379, about 57.9 million blocks, ticks
+ * stuck for 207 seconds, six entities involved.
  * <p>
- * Over the cap we hand back an empty iterable. The loop finds no blocks, no sub-level
- * collision is applied for that pass, and the entity moves normally. Nothing else in
- * {@code collide()} is touched.
+ * Over the cap this returns an empty iterable. The loop finds nothing, no sub-level
+ * collision is applied on that pass, and the entity moves normally. Nothing else in
+ * collide() is touched.
  * <p>
- * This only prevents the freeze; {@code BoundsHealer} is what actually repairs the
- * bounds that caused it.
+ * Stops the freeze only. {@link plumbline.BoundsHealer} is what fixes the bounds.
  */
 @Mixin(targets = "dev.ryanhcode.sable.sublevel.entity_collision.SubLevelEntityCollision", remap = false)
 public class SubLevelEntityCollisionMixin {
@@ -69,9 +66,9 @@ public class SubLevelEntityCollisionMixin {
         boolean isNew = Observations.recordGuard(region);
         if (isNew && PlumblineRuntime.logRegions) {
             Plumbline.LOG.warn(
-                "[Plumbline] skipped an oversized sub-level collision scan: {}x{}x{} = {} blocks, region [{}]."
-                + " The sub-level's bounds are wrong; the healer will try to recompute them."
-                + " Run '/plumbline report' to get a paste-ready bug report.",
+                "[Plumbline] skipped an oversized collision scan: {}x{}x{} = {} blocks, region [{}]."
+                + " The sub-level's bounds are wrong. The healer will try to recalculate them."
+                + " /plumbline report has the details.",
                 dx, dy, dz, volume, region);
         }
         return Collections.emptyList();

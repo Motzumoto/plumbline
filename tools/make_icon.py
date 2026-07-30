@@ -1,10 +1,8 @@
-"""Draw the Plumbline icon as pixel art and write it out as a PNG.
+"""Draws the icon and writes it out as a PNG.
 
-No image libraries: PNG is just zlib-compressed scanlines in a few chunks.
+No image library needed, a PNG is just zlib compressed scanlines in a few chunks.
 
-Composition: a brass plumb bob on a taut, dead-vertical line, with a skewed
-wireframe box behind it. The line is the only truly straight thing in the frame --
-that is the whole point of the mod.
+A brass plumb bob on a vertical line, with a skewed wireframe box behind it.
 
   python make_icon.py            # writes icon.png (256) + icon_64.png, prints previews
   python make_icon.py --no-box   # bob and line only

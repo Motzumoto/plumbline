@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Build plumbline.jar with plain javac.
 #
-# There is no Gradle setup here on purpose: every jar needed to compile this is already
-# present in a working Minecraft install, and a NeoGradle config that nobody has run is
-# worse than none. A tested Gradle/NeoGradle setup is a very welcome pull request.
+# No Gradle setup here. Every jar needed is already sitting in a working Minecraft
+# install, and shipping a NeoGradle config nobody has run seemed worse than shipping
+# none. If you want to add a tested one, please do.
 #
 # Usage:
 #   MC_LIBS=/path/to/launcher/libraries \

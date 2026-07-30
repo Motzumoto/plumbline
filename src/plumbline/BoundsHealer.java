@@ -16,16 +16,16 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3dc;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 
 /**
- * Periodically validates every sub-level's bounding box and repairs impossible ones.
+ * Checks every sub-level's bounding box on a timer and repairs the impossible ones.
  * <p>
- * The primary test is an invariant rather than a heuristic: blocks cannot exist outside
- * the world's build limits, so a bounding box reaching well past them is wrong no matter
- * how large the build is. Repair asks Sable to recompute the bounds
- * ({@code forceUpdateGlobalBounds}), which is idempotent and harmless on a healthy
- * sub-level -- so a false positive costs nothing but a log line.
+ * The test is world height. Blocks can't exist outside the build limits, so a box
+ * reaching well past them is wrong regardless of how big the build is, and there's
+ * nothing to tune. Repair is {@code forceUpdateGlobalBounds()}, which just makes Sable
+ * work the bounds out again; running it on a healthy sub-level does nothing, so getting
+ * it wrong costs a log line.
  * <p>
- * Nothing is ever deleted. If a sub-level cannot be repaired, Plumbline records it and
- * tells an operator; it does not act further.
+ * Nothing is deleted. If a sub-level won't repair it gets recorded and an operator is
+ * told, and that's all.
  */
 public final class BoundsHealer {
 
@@ -127,8 +127,8 @@ public final class BoundsHealer {
                     id, dim, reason, before, finding.after);
             } else {
                 Plumbline.LOG.warn(
-                    "[Plumbline] sub-level {} in {} still has impossible bounds after repair ({}): {}"
-                    + " -- run '/plumbline report' and file it upstream",
+                    "[Plumbline] sub-level {} in {} still has impossible bounds after a repair"
+                    + " attempt ({}): {}. See /plumbline report.",
                     id, dim, reason, finding.after);
                 notifyOps(server, id);
             }

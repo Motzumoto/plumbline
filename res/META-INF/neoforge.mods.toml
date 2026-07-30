@@ -11,24 +11,20 @@ logoFile = "icon.png"
 description = '''
 Sub-level bounds repair for Sable (Create: Aeronautics).
 
-A plumbline is the tool that tells you when something isn't true. This one checks
-sub-level bounding boxes against a fact that cannot be argued with: blocks cannot
-exist outside the world's build limits. A bounding box reaching past them is wrong
-no matter how large the build is.
+Sable's SubLevelEntityCollision.collide() builds its candidate block set with
+BlockPos.betweenClosed(min, max) and never checks the size of that region. A
+sub-level whose bounding box doesn't match its actual blocks can push that into
+the tens of millions, which locks up the server thread. Seen on a real world:
+57.9 million blocks in one region and a tick stuck for 207 seconds, from six
+entities.
 
-Two layers:
-  * A guard that stops a corrupt bounding box from wedging the server thread.
-    Sable's SubLevelEntityCollision.collide() walks BlockPos.betweenClosed(min, max)
-    without checking its size; bad bounds make that span tens of millions of blocks.
-    Observed in the wild: 57.9 million blocks in one region, a single server tick
-    stuck for 207 seconds, caused by six entities.
-  * A healer that periodically asks Sable to recompute impossible bounds.
+A guard caps the region the collision scan may walk, and a healer periodically
+asks Sable to recalculate bounds that reach outside the world height limits.
 
-Plumbline never deletes anything. If a sub-level cannot be repaired it says so and
-stops. Use /plumbline report to get a paste-ready bug report for the Sable tracker.
+Plumbline does not delete anything. If a sub-level can't be repaired it is logged
+and left alone. /plumbline report dumps the details for a bug report.
 
-This is a workaround for an upstream bug and should not need to exist.
-Related: ryanhcode/sable issues #857, #338, #1098.
+Workaround for ryanhcode/sable issues #857, #338 and #1098.
 '''
 
 [[mixins]]

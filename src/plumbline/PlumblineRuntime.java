@@ -1,13 +1,12 @@
 package plumbline;
 
 /**
- * Plain static settings holder.
+ * Static settings the hot paths read.
  * <p>
- * The collision guard runs inside a mixin on Sable's hot path, potentially before
- * NeoForge config loading has happened. Reading a {@code ModConfigSpec} value before
- * its config is loaded throws, so the guard never touches the config directly: it
- * reads these fields, which carry safe defaults and are refreshed by
- * {@link PlumblineConfig#sync()} once the config actually loads.
+ * The guard runs inside a mixin and can fire before NeoForge has loaded configs, and
+ * reading a {@code ModConfigSpec} value that early throws. So it reads these instead.
+ * They start at sane defaults and {@link PlumblineConfig#sync()} updates them once the
+ * config is actually available.
  */
 public final class PlumblineRuntime {
 

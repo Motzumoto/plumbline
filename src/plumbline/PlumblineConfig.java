@@ -13,15 +13,15 @@ public final class PlumblineConfig {
     public static final ModConfigSpec.LongValue GUARD_MAX_VOLUME = B
         .comment(
             "Largest block region the collision guard will let Sable walk in one pass.",
-            "Sable's SubLevelEntityCollision.collide() iterates BlockPos.betweenClosed(min,max)",
-            "without checking its size; a sub-level with bad bounds can make that region span",
-            "tens of millions of blocks and wedge the server thread inside a single tick.",
-            "A real entity sweep is a handful of blocks. Default is 64^3.")
+            "SubLevelEntityCollision.collide() iterates BlockPos.betweenClosed(min,max) without",
+            "checking its size, and a sub-level with bad bounds can push that into the tens of",
+            "millions, which locks up the server thread. A real entity sweep is a few blocks.",
+            "Default is 64 cubed.")
         .defineInRange("guardMaxVolume", 262_144L, 4_096L, Long.MAX_VALUE);
 
     public static final ModConfigSpec.BooleanValue LOG_REGIONS = B
-        .comment("Log each distinct oversized region the guard catches. Keep this on -- it is",
-                 "what '/plumbline report' pastes into an upstream bug report.")
+        .comment("Log each distinct oversized region the guard catches.",
+                 "Worth leaving on, it is what /plumbline report has to work with.")
         .define("logRegions", true);
 
     public static final ModConfigSpec.BooleanValue HEALER_ENABLED = B
@@ -35,18 +35,18 @@ public final class PlumblineConfig {
 
     public static final ModConfigSpec.IntValue WORLD_HEIGHT_SLACK = B
         .comment(
-            "How far outside the world build limits a bounding box may reach before it is",
-            "treated as impossible. Blocks cannot exist outside those limits at all, so this",
-            "is pure tolerance for sub-levels that legitimately sit a little above the ceiling.",
-            "This is the primary check and it is an invariant, not a heuristic -- it cannot",
-            "false-positive on a merely large build.")
+            "How far past the world build limits a bounding box may reach before it counts as",
+            "impossible. Blocks cannot exist out there at all, so this is just slack for",
+            "sub-levels that sit a bit above the ceiling. This check is about how the world",
+            "works rather than a threshold picked out of the air, so it will not fire on a",
+            "build that is merely large.")
         .defineInRange("healer.worldHeightSlack", 128, 0, 4096);
 
     public static final ModConfigSpec.BooleanValue VOLUME_CHECK = B
         .comment(
-            "Secondary heuristic: also flag bounds enclosing more than volumeCheckMax blocks.",
-            "Off by default. Unlike the height test this CAN fire on a legitimately enormous",
-            "build. The repair itself is harmless either way, but the log noise is misleading.")
+            "Second check: also flag bounds enclosing more than volumeCheckMax blocks.",
+            "Off by default. Unlike the height check this one can fire on a genuinely enormous",
+            "build. The repair does no harm either way, but the log lines would be misleading.")
         .define("healer.volumeCheckEnabled", false);
 
     public static final ModConfigSpec.LongValue VOLUME_CHECK_MAX = B

@@ -15,9 +15,8 @@ import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /**
- * {@code /plumbline report} exists because the hard part of this bug is evidence.
- * Most reports of it read "airships lag my server", which is unactionable. This prints
- * a paste-ready report with the actual corrupt numbers.
+ * {@code /plumbline report} dumps what has been observed as markdown, so it can go
+ * straight into a bug report instead of being described as "airships lag my server".
  */
 public final class PlumblineCommand {
 

@@ -11,14 +11,11 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
 /**
- * Plumbline -- sub-level bounds repair for Sable.
+ * Sub-level bounds repair for Sable.
  * <p>
- * Two independent layers, so a failure in one cannot disable the other:
- * <ol>
- *   <li>a mixin guard that stops a corrupt bounding box from wedging the server tick;</li>
- *   <li>a healer that periodically recomputes impossible bounds through Sable's public API.</li>
- * </ol>
- * Plumbline never deletes anything.
+ * Two parts, kept separate so one breaking doesn't take the other with it: a mixin guard
+ * that stops a bad bounding box locking up the server tick, and a healer that recomputes
+ * those bounds through Sable's public API. Nothing is ever deleted.
  */
 @Mod("plumbline")
 public class Plumbline {
@@ -34,6 +31,6 @@ public class Plumbline {
         NeoForge.EVENT_BUS.register(new BoundsHealer());
         NeoForge.EVENT_BUS.register(new PlumblineCommand());
 
-        LOG.info("[Plumbline] loaded -- guarding Sable sub-level collision bounds. Nothing is ever deleted.");
+        LOG.info("[Plumbline] loaded, watching Sable sub-level bounds. Nothing gets deleted.");
     }
 }

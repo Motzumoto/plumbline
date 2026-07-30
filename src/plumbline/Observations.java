@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Everything Plumbline has seen go wrong, kept so {@code /plumbline report} can hand a
- * user a bug report worth reading. Bounded, so a pathological world cannot leak memory.
+ * What has gone wrong so far, kept around for {@code /plumbline report}. Bounded so a
+ * badly broken world can't leak memory.
  */
 public final class Observations {
 
