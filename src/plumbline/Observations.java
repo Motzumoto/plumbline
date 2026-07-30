@@ -47,7 +47,11 @@ public final class Observations {
         /** Consecutive failed repair attempts. Back to zero once one succeeds. */
         public volatile long failedAttempts = 0L;
 
-        /** Healer pass this sub-level may next be retried on. See BoundsHealer.backoffPasses. */
+        /**
+         * Healer pass this sub-level may next be retried on. Set from
+         * BoundsHealer.backoffPasses, which widens the gap after each failure but never
+         * stops retrying.
+         */
         public volatile long nextAttemptPass = 0L;
 
         Finding(String subLevelId, String dimension, String before, String reason) {
@@ -101,6 +105,24 @@ public final class Observations {
 
     public static long guardSeen() {
         return GUARD_SEEN.get();
+    }
+
+    /**
+     * Drops everything observed so far.
+     * <p>
+     * Called when a server starts. These are statics, so without this a singleplayer player
+     * who leaves one world and opens another gets the first world's sub-level IDs in their
+     * report, which is worse than useless in the one place accuracy matters.
+     */
+    public static void reset() {
+        synchronized (GUARD_REGIONS) {
+            GUARD_REGIONS.clear();
+        }
+        synchronized (HEALER_FINDINGS) {
+            HEALER_FINDINGS.clear();
+        }
+        GUARD_TOTAL.set(0L);
+        GUARD_SEEN.set(0L);
     }
 
     public static Map<String, AtomicLong> guardRegions() {

@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
@@ -34,6 +35,23 @@ public final class BoundsHealer {
 
     /** Counts healer passes, so a failing sub-level can be scheduled a few passes out. */
     private long pass = 0L;
+
+    /**
+     * Clear per-server state when a server starts.
+     * <p>
+     * This object is created once in the mod constructor and lives as long as the JVM, but
+     * {@code getTickCount()} belongs to the server and restarts at zero. In singleplayer,
+     * exiting to the title screen and opening a world again builds a fresh server, so
+     * without this reset {@code tick - lastRunTick} stays negative for as long as the
+     * previous session ran and the healer quietly stops doing passes.
+     */
+    @SubscribeEvent
+    public void onServerStarting(ServerStartingEvent event) {
+        pass = 0L;
+        lastRunTick = 0L;
+        lastNotifyMs = 0L;
+        Observations.reset();
+    }
 
     @SubscribeEvent
     public void onServerTick(ServerTickEvent.Post event) {
