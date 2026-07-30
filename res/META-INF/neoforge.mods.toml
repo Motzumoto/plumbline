@@ -1,0 +1,48 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "MIT"
+issueTrackerURL = "https://github.com/ryanhcode/sable/issues"
+
+[[mods]]
+modId = "plumbline"
+version = "1.0.0"
+displayName = "Plumbline"
+description = '''
+Sub-level bounds repair for Sable (Create: Aeronautics).
+
+A plumbline is the tool that tells you when something isn't true. This one checks
+sub-level bounding boxes against a fact that cannot be argued with: blocks cannot
+exist outside the world's build limits. A bounding box reaching past them is wrong
+no matter how large the build is.
+
+Two layers:
+  * A guard that stops a corrupt bounding box from wedging the server thread.
+    Sable's SubLevelEntityCollision.collide() walks BlockPos.betweenClosed(min, max)
+    without checking its size; bad bounds make that span tens of millions of blocks.
+    Observed in the wild: 57.9 million blocks in one region, a single server tick
+    stuck for 207 seconds, caused by six entities.
+  * A healer that periodically asks Sable to recompute impossible bounds.
+
+Plumbline never deletes anything. If a sub-level cannot be repaired it says so and
+stops. Use /plumbline report to get a paste-ready bug report for the Sable tracker.
+
+This is a workaround for an upstream bug and should not need to exist.
+Related: ryanhcode/sable issues #857, #338, #1098.
+'''
+
+[[mixins]]
+config = "plumbline.mixins.json"
+
+[[dependencies.plumbline]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.plumbline]]
+modId = "sable"
+type = "required"
+versionRange = "[2.0,)"
+ordering = "AFTER"
+side = "BOTH"

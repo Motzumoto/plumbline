@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "plumbline.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "SubLevelEntityCollisionMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

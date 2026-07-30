@@ -1,0 +1,6 @@
+# build output
+build/
+*.jar
+
+# third-party jars used only as a compile classpath -- not ours to redistribute
+libs/
