@@ -7,6 +7,7 @@ issueTrackerURL = "https://github.com/ryanhcode/sable/issues"
 modId = "plumbline"
 version = "1.0.0"
 displayName = "Plumbline"
+logoFile = "icon.png"
 description = '''
 Sub-level bounds repair for Sable (Create: Aeronautics).
 

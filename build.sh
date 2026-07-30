@@ -51,7 +51,7 @@ CP="$CP;libs/sable-companion.jar"
 javac -nowarn -proc:none -d "$OUT/classes" -cp "$CP" $(find src -name '*.java')
 
 cp -r res/* "$OUT/classes/"
-cp LICENSE README.md "$OUT/classes/"
+cp LICENSE README.md icon.png "$OUT/classes/"
 ( cd "$OUT/classes" && jar --create --file ../plumbline.jar . )
 
 echo "built $OUT/plumbline.jar"

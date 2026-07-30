@@ -1,3 +1,5 @@
+<img src="icon.png" alt="Plumbline" width="128" align="right">
+
 # Plumbline
 
 **Sub-level bounds repair for [Sable](https://modrinth.com/mod/sable) / Create: Aeronautics.**
