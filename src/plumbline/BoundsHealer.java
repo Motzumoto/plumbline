@@ -66,6 +66,7 @@ public final class BoundsHealer {
         }
         lastRunTick = tick;
         pass++;
+        Observations.beginInspection();
 
         try {
             for (ServerLevel level : server.getAllLevels()) {
@@ -111,6 +112,9 @@ public final class BoundsHealer {
             if (bb == null) {
                 continue;
             }
+
+            String id0 = String.valueOf(sub.getUniqueId());
+            Observations.recordInspected(id0, dim, describe(bb), volumeOf(bb));
 
             String reason = diagnose(bb, floor, ceiling);
             if (reason == null) {
@@ -218,6 +222,18 @@ public final class BoundsHealer {
     private static boolean finite(BoundingBox3dc bb) {
         return Double.isFinite(bb.minX()) && Double.isFinite(bb.minY()) && Double.isFinite(bb.minZ())
             && Double.isFinite(bb.maxX()) && Double.isFinite(bb.maxY()) && Double.isFinite(bb.maxZ());
+    }
+
+    /** Block count the box encloses, for comparing against what the guard is seeing. */
+    static long volumeOf(BoundingBox3dc bb) {
+        if (!finite(bb)) {
+            return -1L;
+        }
+        double vx = Math.abs(bb.maxX() - bb.minX());
+        double vy = Math.abs(bb.maxY() - bb.minY());
+        double vz = Math.abs(bb.maxZ() - bb.minZ());
+        double v = vx * vy * vz;
+        return (v > (double) Long.MAX_VALUE) ? Long.MAX_VALUE : (long) v;
     }
 
     static String describe(BoundingBox3dc bb) {

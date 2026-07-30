@@ -70,8 +70,25 @@ public final class PlumblineCommand {
         sb.append("| Height slack allowed | ").append(PlumblineRuntime.worldHeightSlack).append(" |\n");
         sb.append("| Guard volume cap | ").append(PlumblineRuntime.guardMaxVolume).append(" |\n\n");
 
+        Map<String, String> inspected = Observations.inspected();
+        sb.append("**Sub-levels the healer looked at on its last pass: ")
+          .append(inspected.size()).append("**\n\n");
+        if (inspected.isEmpty()) {
+            sb.append("_The healer enumerated no sub-levels. If the guard below has a non-zero\n");
+            sb.append("skip count then the two disagree, and the healer is looking in the wrong\n");
+            sb.append("place rather than finding nothing wrong._\n\n");
+        } else {
+            sb.append("| sub-level | dimension, bounds and volume |\n|---|---|\n");
+            for (Map.Entry<String, String> e : inspected.entrySet()) {
+                sb.append("| `").append(e.getKey()).append("` | `")
+                  .append(e.getValue()).append("` |\n");
+            }
+            sb.append('\n');
+        }
+
         Map<String, Observations.Finding> findings = Observations.findings();
-        sb.append("**Sub-levels with impossible bounds: ").append(findings.size()).append("**\n\n");
+        sb.append("**Of those, flagged as having impossible bounds: ")
+          .append(findings.size()).append("**\n\n");
         if (findings.isEmpty()) {
             sb.append("_none observed_\n\n");
         } else {

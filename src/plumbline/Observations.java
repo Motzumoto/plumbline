@@ -24,6 +24,16 @@ public final class Observations {
     private static final Map<String, Finding> HEALER_FINDINGS =
         Collections.synchronizedMap(new LinkedHashMap<>());
 
+    /**
+     * Every sub-level the last healer pass looked at, flagged or not, keyed by id.
+     * <p>
+     * Without this, "flagged 0" means either "checked them and they were fine" or "never
+     * saw a sub-level at all", and those want completely different follow-up. Rebuilt each
+     * pass so it always describes the current state rather than accumulating history.
+     */
+    private static final Map<String, String> INSPECTED =
+        Collections.synchronizedMap(new LinkedHashMap<>());
+
     private static final AtomicLong GUARD_TOTAL = new AtomicLong();
 
     /**
@@ -65,6 +75,27 @@ public final class Observations {
     /** Called on every guard invocation, before any size test. */
     public static void recordGuardSeen() {
         GUARD_SEEN.incrementAndGet();
+    }
+
+    /** Start of a healer pass. The inspected list describes one pass, not the session. */
+    public static void beginInspection() {
+        synchronized (INSPECTED) {
+            INSPECTED.clear();
+        }
+    }
+
+    public static void recordInspected(String id, String dim, String box, long volume) {
+        synchronized (INSPECTED) {
+            if (INSPECTED.size() < MAX_ENTRIES) {
+                INSPECTED.put(id, dim + " " + box + " volume " + volume);
+            }
+        }
+    }
+
+    public static Map<String, String> inspected() {
+        synchronized (INSPECTED) {
+            return new LinkedHashMap<>(INSPECTED);
+        }
     }
 
     /** @return true if this exact region is new (caller should log it once). */
@@ -120,6 +151,9 @@ public final class Observations {
         }
         synchronized (HEALER_FINDINGS) {
             HEALER_FINDINGS.clear();
+        }
+        synchronized (INSPECTED) {
+            INSPECTED.clear();
         }
         GUARD_TOTAL.set(0L);
         GUARD_SEEN.set(0L);
