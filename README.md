@@ -54,8 +54,10 @@ against the world height limits. Anything impossible gets `forceUpdateGlobalBoun
 which asks Sable to work its bounds out again from the blocks that are really there.
 Doing that to a healthy sub-level changes nothing, so a false positive costs a log line.
 
-If a sub-level is still wrong after a repair attempt, Plumbline writes it down, tells an
-operator once, and stops.
+If a sub-level is still wrong after a repair attempt, Plumbline writes it down and tells an
+operator once. It keeps retrying that one but waits twice as long each time, levelling off
+at half an hour, so a sub-level nobody can fix costs about one log line every thirty
+minutes rather than one every pass. It never gives up on it and it never removes it.
 
 ## /plumbline report
 

@@ -44,6 +44,12 @@ public final class Observations {
         public volatile boolean repaired = false;
         public volatile long seen = 1L;
 
+        /** Consecutive failed repair attempts. Back to zero once one succeeds. */
+        public volatile long failedAttempts = 0L;
+
+        /** Healer pass this sub-level may next be retried on. See BoundsHealer.backoffPasses. */
+        public volatile long nextAttemptPass = 0L;
+
         Finding(String subLevelId, String dimension, String before, String reason) {
             this.subLevelId = subLevelId;
             this.dimension = dimension;

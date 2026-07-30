@@ -32,6 +32,9 @@ public final class BoundsHealer {
     private long lastRunTick = 0L;
     private long lastNotifyMs = 0L;
 
+    /** Counts healer passes, so a failing sub-level can be scheduled a few passes out. */
+    private long pass = 0L;
+
     @SubscribeEvent
     public void onServerTick(ServerTickEvent.Post event) {
         if (!PlumblineRuntime.enabled || !PlumblineRuntime.healerEnabled) {
@@ -44,6 +47,7 @@ public final class BoundsHealer {
             return;
         }
         lastRunTick = tick;
+        pass++;
 
         try {
             for (ServerLevel level : server.getAllLevels()) {
@@ -99,6 +103,13 @@ public final class BoundsHealer {
             String before = describe(bb);
             Observations.Finding finding = Observations.recordFinding(id, dim, before, reason);
 
+            // Backing off after earlier failures. Skipping is silent by design: a sub-level
+            // that cannot be fixed should not cost a log line and a full bounds recompute
+            // every pass for the rest of the session.
+            if (pass < finding.nextAttemptPass) {
+                continue;
+            }
+
             // Repair: ask Sable to recompute. Harmless on a healthy sub-level.
             try {
                 sub.forceUpdateGlobalBounds();
@@ -122,17 +133,48 @@ public final class BoundsHealer {
             finding.repaired = !stillBad;
 
             if (!stillBad) {
+                finding.failedAttempts = 0L;
+                finding.nextAttemptPass = 0L;
                 Plumbline.LOG.info(
                     "[Plumbline] repaired sub-level {} in {} ({}) -- bounds {} -> {}",
                     id, dim, reason, before, finding.after);
             } else {
+                finding.failedAttempts++;
+                int wait = backoffPasses(finding.failedAttempts);
+                finding.nextAttemptPass = pass + wait;
                 Plumbline.LOG.warn(
                     "[Plumbline] sub-level {} in {} still has impossible bounds after a repair"
-                    + " attempt ({}): {}. See /plumbline report.",
-                    id, dim, reason, finding.after);
+                    + " attempt ({}): {}. Failure {}, retrying in {} pass(es)."
+                    + " See /plumbline report.",
+                    id, dim, reason, finding.after, finding.failedAttempts, wait);
                 notifyOps(server, id);
             }
         }
+    }
+
+    /** Longest gap between retries, regardless of how the healer interval is configured. */
+    private static final long MAX_BACKOFF_SECONDS = 1800L;
+
+    /**
+     * How long to wait before retrying a sub-level whose repair just failed.
+     * <p>
+     * Doubles each time and then levels off. A repair can fail for reasons that go away on
+     * their own, an unloaded chunk being the obvious one, so this never stops retrying. It
+     * just gets bored. By the fifth or sixth failure the retries are far enough apart that
+     * a sub-level nobody can fix costs about one log line every half hour.
+     * <p>
+     * The ceiling is in seconds rather than passes because {@code healer.intervalSeconds}
+     * ranges from 5 to 3600. A fixed pass count would mean half an hour at the default and
+     * days at the top of that range.
+     *
+     * @param failures consecutive failed attempts, 1 on the first failure
+     * @return healer passes to skip before trying again, at least 1
+     */
+    private static int backoffPasses(long failures) {
+        long interval = Math.max(1L, PlumblineRuntime.healerIntervalSeconds);
+        long ceiling = Math.max(1L, MAX_BACKOFF_SECONDS / interval);
+        long doublings = Math.min(Math.max(0L, failures - 1L), 20L);   // 20 keeps the shift sane
+        return (int) Math.min(1L << doublings, ceiling);
     }
 
     /** @return a human-readable reason, or null when the box is fine. */
