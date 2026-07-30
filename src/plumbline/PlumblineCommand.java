@@ -32,8 +32,11 @@ public final class PlumblineCommand {
     private static int status(CommandSourceStack src) {
         Map<String, Observations.Finding> findings = Observations.findings();
         long repaired = findings.values().stream().filter(f -> f.repaired).count();
+        long seen = Observations.guardSeen();
         src.sendSuccess(() -> Component.literal(
-            "[Plumbline] guard skips: " + Observations.guardTotal()
+            "[Plumbline] collision scans seen: " + seen
+            + (seen == 0L ? " (guard has not been consulted yet)" : "")
+            + "; skipped: " + Observations.guardTotal()
             + " across " + Observations.guardRegions().size() + " distinct region(s); "
             + "sub-levels flagged: " + findings.size()
             + " (" + repaired + " repaired). Nothing is ever deleted."), false);
@@ -84,11 +87,15 @@ public final class PlumblineCommand {
         }
 
         Map<String, AtomicLong> regions = Observations.guardRegions();
-        sb.append("**Oversized collision regions caught in `SubLevelEntityCollision.collide`: ")
-          .append(Observations.guardTotal()).append(" skip(s) across ")
+        long seen = Observations.guardSeen();
+        sb.append("**Guard: ").append(seen).append(" collision scan(s) seen, ")
+          .append(Observations.guardTotal()).append(" skipped as oversized, across ")
           .append(regions.size()).append(" distinct region(s)**\n\n");
-        if (regions.isEmpty()) {
-            sb.append("_none observed_\n");
+        if (seen == 0L) {
+            sb.append("_The guard was never consulted. Either no entity moved near a sub-level\n");
+            sb.append("during this session, or the mixin did not apply._\n");
+        } else if (regions.isEmpty()) {
+            sb.append("_Guard is live and nothing was oversized._\n");
         } else {
             sb.append("| region (min -> max) | hits |\n|---|---|\n");
             for (Map.Entry<String, AtomicLong> e : regions.entrySet()) {

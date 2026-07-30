@@ -39,6 +39,11 @@ public class SubLevelEntityCollisionMixin {
         remap = false
     )
     private static Iterable<BlockPos> plumbline$capCollisionVolume(BlockPos min, BlockPos max) {
+        // Counted before the enabled check on purpose. A zero here is the one thing that
+        // distinguishes "the mixin never applied" from "nothing was ever oversized", and
+        // that answer matters most to somebody who thinks Plumbline is doing nothing.
+        Observations.recordGuardSeen();
+
         if (!PlumblineRuntime.enabled) {
             return BlockPos.betweenClosed(min, max);
         }

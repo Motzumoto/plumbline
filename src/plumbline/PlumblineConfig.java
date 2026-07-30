@@ -7,7 +7,9 @@ public final class PlumblineConfig {
     private static final ModConfigSpec.Builder B = new ModConfigSpec.Builder();
 
     public static final ModConfigSpec.BooleanValue ENABLED = B
-        .comment("Master switch. When false Plumbline does nothing at all.")
+        .comment("Master switch. When false Plumbline changes nothing about how Sable behaves.",
+                 "It still counts how often the guard is consulted, so /plumbline status can",
+                 "tell you the mixin applied.")
         .define("enabled", true);
 
     public static final ModConfigSpec.LongValue GUARD_MAX_VOLUME = B

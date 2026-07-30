@@ -26,6 +26,15 @@ public final class Observations {
 
     private static final AtomicLong GUARD_TOTAL = new AtomicLong();
 
+    /**
+     * Every call the guard sees, skipped or not.
+     * <p>
+     * Without this a zero skip count means either "nothing was ever oversized" or "the
+     * mixin never ran", and those need very different follow-up. A non-zero count here
+     * with zero skips says the guard is live and the world is fine.
+     */
+    private static final AtomicLong GUARD_SEEN = new AtomicLong();
+
     public static final class Finding {
         public final String subLevelId;
         public final String dimension;
@@ -41,6 +50,11 @@ public final class Observations {
             this.before = before;
             this.reason = reason;
         }
+    }
+
+    /** Called on every guard invocation, before any size test. */
+    public static void recordGuardSeen() {
+        GUARD_SEEN.incrementAndGet();
     }
 
     /** @return true if this exact region is new (caller should log it once). */
@@ -79,6 +93,10 @@ public final class Observations {
         return GUARD_TOTAL.get();
     }
 
+    public static long guardSeen() {
+        return GUARD_SEEN.get();
+    }
+
     public static Map<String, AtomicLong> guardRegions() {
         synchronized (GUARD_REGIONS) {
             return new LinkedHashMap<>(GUARD_REGIONS);
@@ -89,9 +107,5 @@ public final class Observations {
         synchronized (HEALER_FINDINGS) {
             return new LinkedHashMap<>(HEALER_FINDINGS);
         }
-    }
-
-    public static boolean isEmpty() {
-        return GUARD_TOTAL.get() == 0L && HEALER_FINDINGS.isEmpty();
     }
 }
