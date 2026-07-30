@@ -45,9 +45,8 @@ public final class PlumblineCommand {
         // Chat truncates and mangles long text; the log is what people actually paste.
         Plumbline.LOG.info("\n{}", text);
         src.sendSuccess(() -> Component.literal(
-            "[Plumbline] Report written to the server log (latest.log). "
-            + "Copy the block starting '### Plumbline report' into "
-            + "https://github.com/ryanhcode/sable/issues"), false);
+            "[Plumbline] Report written to the server log (latest.log), "
+            + "starting at '### Plumbline report'."), false);
         return 1;
     }
 

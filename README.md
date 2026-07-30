@@ -63,9 +63,9 @@ Most reports of this bug amount to "airships lag my server", which nobody can ac
 `/plumbline report` writes markdown to the log: mod versions, world height limits, every
 bad bounding box before and after repair, and each oversized region with a hit count.
 
-If Plumbline catches something on your server, please paste that into
-[the Sable tracker](https://github.com/ryanhcode/sable/issues). This is a workaround for
-a bug in someone else's mod, and it would be better if it didn't need to exist.
+Plumbline works around a bug in another mod and it would be better if it didn't have to
+exist. The report is there so that if you decide to write the problem up, you have the
+actual numbers to write it up with.
 
 `/plumbline status` prints a one line summary. Both commands need permission level 2.
 

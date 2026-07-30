@@ -14,7 +14,7 @@
 
 set -euo pipefail
 
-: "${MC_LIBS:?set MC_LIBS to your launcher's libraries directory}"
+: "${MC_LIBS:?set MC_LIBS to the libraries directory of your launcher}"
 : "${SABLE_JAR:?set SABLE_JAR to the Sable mod jar}"
 
 MC_VERSION="${MC_VERSION:-1.21.1-20240808.144430}"

@@ -1,7 +1,7 @@
 modLoader = "javafml"
 loaderVersion = "[1,)"
 license = "MIT"
-issueTrackerURL = "https://github.com/ryanhcode/sable/issues"
+issueTrackerURL = "https://github.com/Motzumoto/plumbline/issues"
 
 [[mods]]
 modId = "plumbline"
