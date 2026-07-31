@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * What has gone wrong so far, kept around for {@code /plumbline report}. Bounded so a
- * badly broken world can't leak memory.
+ * What the guard has seen, kept for {@code /plumbline report}. Bounded so a badly behaved
+ * world cannot leak memory.
  */
 public final class Observations {
 
@@ -16,22 +16,8 @@ public final class Observations {
 
     private static final int MAX_ENTRIES = 128;
 
-    /** Oversized collision regions caught by the guard, keyed by their extents. */
+    /** Oversized collision regions the guard skipped, keyed by their extents. */
     private static final Map<String, AtomicLong> GUARD_REGIONS =
-        Collections.synchronizedMap(new LinkedHashMap<>());
-
-    /** Sub-levels the healer found with impossible bounds. */
-    private static final Map<String, Finding> HEALER_FINDINGS =
-        Collections.synchronizedMap(new LinkedHashMap<>());
-
-    /**
-     * Every sub-level the last healer pass looked at, flagged or not, keyed by id.
-     * <p>
-     * Without this, "flagged 0" means either "checked them and they were fine" or "never
-     * saw a sub-level at all", and those want completely different follow-up. Rebuilt each
-     * pass so it always describes the current state rather than accumulating history.
-     */
-    private static final Map<String, String> INSPECTED =
         Collections.synchronizedMap(new LinkedHashMap<>());
 
     private static final AtomicLong GUARD_TOTAL = new AtomicLong();
@@ -45,57 +31,9 @@ public final class Observations {
      */
     private static final AtomicLong GUARD_SEEN = new AtomicLong();
 
-    public static final class Finding {
-        public final String subLevelId;
-        public final String dimension;
-        public final String before;
-        public final String reason;
-        public volatile String after = "(not yet repaired)";
-        public volatile boolean repaired = false;
-        public volatile long seen = 1L;
-
-        /** Consecutive failed repair attempts. Back to zero once one succeeds. */
-        public volatile long failedAttempts = 0L;
-
-        /**
-         * Healer pass this sub-level may next be retried on. Set from
-         * BoundsHealer.backoffPasses, which widens the gap after each failure but never
-         * stops retrying.
-         */
-        public volatile long nextAttemptPass = 0L;
-
-        Finding(String subLevelId, String dimension, String before, String reason) {
-            this.subLevelId = subLevelId;
-            this.dimension = dimension;
-            this.before = before;
-            this.reason = reason;
-        }
-    }
-
     /** Called on every guard invocation, before any size test. */
     public static void recordGuardSeen() {
         GUARD_SEEN.incrementAndGet();
-    }
-
-    /** Start of a healer pass. The inspected list describes one pass, not the session. */
-    public static void beginInspection() {
-        synchronized (INSPECTED) {
-            INSPECTED.clear();
-        }
-    }
-
-    public static void recordInspected(String id, String dim, String box, long volume) {
-        synchronized (INSPECTED) {
-            if (INSPECTED.size() < MAX_ENTRIES) {
-                INSPECTED.put(id, dim + " " + box + " volume " + volume);
-            }
-        }
-    }
-
-    public static Map<String, String> inspected() {
-        synchronized (INSPECTED) {
-            return new LinkedHashMap<>(INSPECTED);
-        }
     }
 
     /** @return true if this exact region is new (caller should log it once). */
@@ -115,21 +53,6 @@ public final class Observations {
         }
     }
 
-    public static Finding recordFinding(String id, String dim, String before, String reason) {
-        synchronized (HEALER_FINDINGS) {
-            Finding existing = HEALER_FINDINGS.get(id);
-            if (existing != null) {
-                existing.seen++;
-                return existing;
-            }
-            Finding f = new Finding(id, dim, before, reason);
-            if (HEALER_FINDINGS.size() < MAX_ENTRIES) {
-                HEALER_FINDINGS.put(id, f);
-            }
-            return f;
-        }
-    }
-
     public static long guardTotal() {
         return GUARD_TOTAL.get();
     }
@@ -138,36 +61,24 @@ public final class Observations {
         return GUARD_SEEN.get();
     }
 
-    /**
-     * Drops everything observed so far.
-     * <p>
-     * Called when a server starts. These are statics, so without this a singleplayer player
-     * who leaves one world and opens another gets the first world's sub-level IDs in their
-     * report, which is worse than useless in the one place accuracy matters.
-     */
-    public static void reset() {
-        synchronized (GUARD_REGIONS) {
-            GUARD_REGIONS.clear();
-        }
-        synchronized (HEALER_FINDINGS) {
-            HEALER_FINDINGS.clear();
-        }
-        synchronized (INSPECTED) {
-            INSPECTED.clear();
-        }
-        GUARD_TOTAL.set(0L);
-        GUARD_SEEN.set(0L);
-    }
-
     public static Map<String, AtomicLong> guardRegions() {
         synchronized (GUARD_REGIONS) {
             return new LinkedHashMap<>(GUARD_REGIONS);
         }
     }
 
-    public static Map<String, Finding> findings() {
-        synchronized (HEALER_FINDINGS) {
-            return new LinkedHashMap<>(HEALER_FINDINGS);
+    /**
+     * Drops everything counted so far. Called when a server starts.
+     * <p>
+     * These are statics and the mod object outlives any single server, so without this a
+     * singleplayer player who leaves one world and opens another carries the first world's
+     * numbers into the second one's report.
+     */
+    public static void reset() {
+        synchronized (GUARD_REGIONS) {
+            GUARD_REGIONS.clear();
         }
+        GUARD_TOTAL.set(0L);
+        GUARD_SEEN.set(0L);
     }
 }

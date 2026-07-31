@@ -14,11 +14,18 @@ public final class PlumblineConfig {
 
     public static final ModConfigSpec.LongValue GUARD_MAX_VOLUME = B
         .comment(
-            "Largest block region the collision guard will let Sable walk in one pass.",
-            "SubLevelEntityCollision.collide() iterates BlockPos.betweenClosed(min,max) without",
-            "checking its size, and a sub-level with bad bounds can push that into the tens of",
-            "millions, which locks up the server thread. A real entity sweep is a few blocks.",
-            "Default is 64 cubed.")
+            "Largest block region the guard will let Sable walk in one collision pass.",
+            "",
+            "Sable already caps this at 125,000,000 and skips the pass when it is exceeded.",
+            "That ceiling is too high to help: a region of 57.9 million froze a server tick",
+            "for 207 seconds without ever reaching it. This is the same check at a threshold",
+            "that catches the problem.",
+            "",
+            "What is known about the default: across 35,502 observed collision passes with",
+            "sub-levels at rest, none came close to 262,144. What is not known is how large a",
+            "legitimate pass gets while a sub-level is rotating quickly, because no such",
+            "sample has been collected. If entities pass through a fast-spinning sub-level,",
+            "raise this and please open an issue with the numbers from /plumbline report.")
         .defineInRange("guardMaxVolume", 262_144L, 4_096L, Long.MAX_VALUE);
 
     public static final ModConfigSpec.BooleanValue LOG_REGIONS = B
@@ -26,58 +33,19 @@ public final class PlumblineConfig {
                  "Worth leaving on, it is what /plumbline report has to work with.")
         .define("logRegions", true);
 
-    public static final ModConfigSpec.BooleanValue HEALER_ENABLED = B
-        .comment("Periodically validate sub-level bounding boxes and repair impossible ones.",
-                 "Repair means asking Sable to recompute the bounds. Nothing is ever deleted.")
-        .define("healer.enabled", true);
-
-    public static final ModConfigSpec.IntValue HEALER_INTERVAL = B
-        .comment("Seconds between healer passes.")
-        .defineInRange("healer.intervalSeconds", 30, 5, 3600);
-
-    public static final ModConfigSpec.IntValue WORLD_HEIGHT_SLACK = B
-        .comment(
-            "How far past the world build limits a bounding box may reach before it counts as",
-            "impossible. Blocks cannot exist out there at all, so this is just slack for",
-            "sub-levels that sit a bit above the ceiling. This check is about how the world",
-            "works rather than a threshold picked out of the air, so it will not fire on a",
-            "build that is merely large.")
-        .defineInRange("healer.worldHeightSlack", 128, 0, 4096);
-
-    public static final ModConfigSpec.BooleanValue VOLUME_CHECK = B
-        .comment(
-            "Second check: also flag bounds enclosing more than volumeCheckMax blocks.",
-            "Off by default. Unlike the height check this one can fire on a genuinely enormous",
-            "build. The repair does no harm either way, but the log lines would be misleading.")
-        .define("healer.volumeCheckEnabled", false);
-
-    public static final ModConfigSpec.LongValue VOLUME_CHECK_MAX = B
-        .comment("Volume threshold for the secondary heuristic above.")
-        .defineInRange("healer.volumeCheckMax", 64_000_000L, 1_000_000L, Long.MAX_VALUE);
-
-    public static final ModConfigSpec.BooleanValue NOTIFY_OPS = B
-        .comment("Message online operators when a sub-level fails to repair.")
-        .define("healer.notifyOps", true);
-
     public static final ModConfigSpec SPEC = B.build();
 
     private PlumblineConfig() {
     }
 
-    /** Copy config values into {@link PlumblineRuntime}, which is what the hot paths read. */
+    /** Copy config values into {@link PlumblineRuntime}, which is what the hot path reads. */
     public static void sync() {
         try {
             PlumblineRuntime.enabled = ENABLED.get();
             PlumblineRuntime.guardMaxVolume = GUARD_MAX_VOLUME.get();
             PlumblineRuntime.logRegions = LOG_REGIONS.get();
-            PlumblineRuntime.healerEnabled = HEALER_ENABLED.get();
-            PlumblineRuntime.healerIntervalSeconds = HEALER_INTERVAL.get();
-            PlumblineRuntime.worldHeightSlack = WORLD_HEIGHT_SLACK.get();
-            PlumblineRuntime.volumeCheckEnabled = VOLUME_CHECK.get();
-            PlumblineRuntime.volumeCheckMax = VOLUME_CHECK_MAX.get();
-            PlumblineRuntime.notifyOps = NOTIFY_OPS.get();
         } catch (IllegalStateException ignored) {
-            // config not loaded yet -- defaults in PlumblineRuntime stay in force
+            // config not loaded yet, defaults in PlumblineRuntime stay in force
         }
     }
 }

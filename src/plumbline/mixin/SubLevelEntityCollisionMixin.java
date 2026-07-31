@@ -15,17 +15,22 @@ import plumbline.PlumblineRuntime;
 /**
  * Caps the block region {@code SubLevelEntityCollision.collide()} is allowed to walk.
  * <p>
- * collide() builds its candidate set with {@code BlockPos.betweenClosed(min, max)} and
- * iterates it in a four pass loop without checking the size. If the sub-level's bounds
- * are wrong that region can cover tens of millions of positions, so one entity move
- * never finishes. Seen on a real world: 155x985x379, about 57.9 million blocks, ticks
- * stuck for 207 seconds, six entities involved.
+ * collide() takes the entity's swept bounding box, expands it slightly, and inverse
+ * transforms it into the sub-level's local frame twice: once against
+ * {@code LevelReusedVectors.lastPose} and once against {@code SubLevel.logicalPose()}.
+ * It unions those two boxes and walks every block position inside with
+ * {@code BlockPos.betweenClosed(min, max)}. When the sub-level moved or rotated a long
+ * way between those two poses the union spans the gap, and one entity move has to walk
+ * tens of millions of positions. Seen on a real world: 155x985x379, about 57.9 million
+ * positions, a tick stuck for 207 seconds.
+ * <p>
+ * Sable already guards this. It compares the same union's volume against 125,000,000 and
+ * logs "Enormous local sub-level collision bounds, quitting." That ceiling is high enough
+ * that the 57.9 million case passed straight through it. This is the same test, lower.
  * <p>
  * Over the cap this returns an empty iterable. The loop finds nothing, no sub-level
  * collision is applied on that pass, and the entity moves normally. Nothing else in
  * collide() is touched.
- * <p>
- * Stops the freeze only. {@link plumbline.BoundsHealer} is what fixes the bounds.
  */
 @Mixin(targets = "dev.ryanhcode.sable.sublevel.entity_collision.SubLevelEntityCollision", remap = false)
 public class SubLevelEntityCollisionMixin {
@@ -71,9 +76,9 @@ public class SubLevelEntityCollisionMixin {
         boolean isNew = Observations.recordGuard(region);
         if (isNew && PlumblineRuntime.logRegions) {
             Plumbline.LOG.warn(
-                "[Plumbline] skipped an oversized collision scan: {}x{}x{} = {} blocks, region [{}]."
-                + " The sub-level's bounds are wrong. The healer will try to recalculate them."
-                + " /plumbline report has the details.",
+                "[Plumbline] skipped an oversized collision pass: {}x{}x{} = {} positions,"
+                + " region [{}] in sub-level local space. The sub-level moved a long way"
+                + " between its last pose and its current one. /plumbline report has the details.",
                 dx, dy, dz, volume, region);
         }
         return Collections.emptyList();

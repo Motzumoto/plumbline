@@ -5,26 +5,29 @@ issueTrackerURL = "https://github.com/Motzumoto/plumbline/issues"
 
 [[mods]]
 modId = "plumbline"
-version = "1.0.0"
+version = "1.1.0"
 displayName = "Plumbline"
 logoFile = "icon.png"
 description = '''
-Sub-level bounds repair for Sable (Create: Aeronautics).
+Keeps entity collision against Sable sub-levels from freezing the server tick.
+For Create: Aeronautics.
 
-Sable's SubLevelEntityCollision.collide() builds its candidate block set with
-BlockPos.betweenClosed(min, max) and never checks the size of that region. A
-sub-level whose bounding box doesn't match its actual blocks can push that into
-the tens of millions, which locks up the server thread. Seen on a real world:
-57.9 million blocks in one region and a tick stuck for 207 seconds, from six
-entities.
+To decide which blocks an entity might hit, Sable inverse transforms the entity's
+swept bounding box into the sub-level's local frame twice, once at its previous
+pose and once at its current one, unions the two, and walks every block position
+inside. When the sub-level rotated or travelled a long way between those poses the
+union spans the gap between them, and one entity step has to walk tens of millions
+of positions. Seen on a real world: 57.9 million positions and a tick stuck for
+207 seconds.
 
-A guard caps the region the collision scan may walk, and a healer periodically
-asks Sable to recalculate bounds that reach outside the world height limits.
+Sable caps that volume at 125,000,000, which the 57.9 million case passed straight
+through. Plumbline applies the same cap at 262,144 and skips the pass when it is
+exceeded, which is what Sable already does above its own ceiling.
 
-Plumbline does not delete anything. If a sub-level can't be repaired it is logged
-and left alone. /plumbline report dumps the details for a bug report.
+/plumbline report dumps the collision passes seen, the cap in force, and every
+oversized region, in a form worth attaching to a bug report.
 
-Workaround for ryanhcode/sable issues #857, #338 and #1098.
+Related to ryanhcode/sable issues #857, #338 and #1098.
 '''
 
 [[mixins]]
