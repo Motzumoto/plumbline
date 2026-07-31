@@ -25,8 +25,12 @@ public final class PlumblineConfig {
             "sub-levels at rest, none came close to 262,144. What is not known is how large a",
             "legitimate pass gets while a sub-level is rotating quickly, because no such",
             "sample has been collected. If entities pass through a fast-spinning sub-level,",
-            "raise this and please open an issue with the numbers from /plumbline report.")
-        .defineInRange("guardMaxVolume", 262_144L, 4_096L, Long.MAX_VALUE);
+            "raise this and please open an issue with the numbers from /plumbline report.",
+            "",
+            "Setting this to 1 makes every sweep narrow and every pass hit the guard. That is",
+            "not a sensible way to play, but it is a quick way to check what the mod does to",
+            "collision without waiting for the rare case that triggers it naturally.")
+        .defineInRange("guardMaxVolume", 262_144L, 1L, Long.MAX_VALUE);
 
     public static final ModConfigSpec.BooleanValue NARROW_SWEEP = B
         .comment(
