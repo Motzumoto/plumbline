@@ -31,9 +31,58 @@ public final class Observations {
      */
     private static final AtomicLong GUARD_SEEN = new AtomicLong();
 
+    /** Sweeps narrowed to the current pose, keyed by the union that was too big. */
+    private static final Map<String, AtomicLong> NARROWED =
+        Collections.synchronizedMap(new LinkedHashMap<>());
+
+    private static final AtomicLong NARROW_TOTAL = new AtomicLong();
+    private static final AtomicLong NARROW_SEEN = new AtomicLong();
+
     /** Called on every guard invocation, before any size test. */
     public static void recordGuardSeen() {
         GUARD_SEEN.incrementAndGet();
+    }
+
+    /**
+     * Called on every sweep union, narrowed or not.
+     * <p>
+     * This injection is optional, so a zero here means it never applied and the mod is
+     * running on the guard alone. That is a supported state but the operator should be
+     * able to see it.
+     */
+    public static void recordNarrowSeen() {
+        NARROW_SEEN.incrementAndGet();
+    }
+
+    /** @return true if this exact union is new (caller should log it once). */
+    public static boolean recordNarrowed(String union) {
+        NARROW_TOTAL.incrementAndGet();
+        synchronized (NARROWED) {
+            AtomicLong n = NARROWED.get(union);
+            if (n != null) {
+                n.incrementAndGet();
+                return false;
+            }
+            if (NARROWED.size() >= MAX_ENTRIES) {
+                return false;
+            }
+            NARROWED.put(union, new AtomicLong(1L));
+            return true;
+        }
+    }
+
+    public static long narrowTotal() {
+        return NARROW_TOTAL.get();
+    }
+
+    public static long narrowSeen() {
+        return NARROW_SEEN.get();
+    }
+
+    public static Map<String, AtomicLong> narrowedUnions() {
+        synchronized (NARROWED) {
+            return new LinkedHashMap<>(NARROWED);
+        }
     }
 
     /** @return true if this exact region is new (caller should log it once). */
@@ -78,7 +127,12 @@ public final class Observations {
         synchronized (GUARD_REGIONS) {
             GUARD_REGIONS.clear();
         }
+        synchronized (NARROWED) {
+            NARROWED.clear();
+        }
         GUARD_TOTAL.set(0L);
         GUARD_SEEN.set(0L);
+        NARROW_TOTAL.set(0L);
+        NARROW_SEEN.set(0L);
     }
 }

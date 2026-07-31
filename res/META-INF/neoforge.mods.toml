@@ -20,9 +20,13 @@ union spans the gap between them, and one entity step has to walk tens of millio
 of positions. Seen on a real world: 57.9 million positions and a tick stuck for
 207 seconds.
 
-Sable caps that volume at 125,000,000, which the 57.9 million case passed straight
-through. Plumbline applies the same cap at 262,144 and skips the pass when it is
-exceeded, which is what Sable already does above its own ceiling.
+Only the union is large. Each half is about the size of the entity. So when the
+union exceeds 262,144 positions Plumbline collides against the current pose alone,
+which keeps collision working and gives up only the tunnelling protection across
+that movement. A second check caps the region outright if one still gets through.
+
+Sable caps the same volume at 125,000,000 and skips the pass, a ceiling the 57.9
+million case passed straight through.
 
 /plumbline report dumps the collision passes seen, the cap in force, and every
 oversized region, in a form worth attaching to a bug report.

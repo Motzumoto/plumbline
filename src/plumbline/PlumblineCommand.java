@@ -62,6 +62,24 @@ public final class PlumblineCommand {
         sb.append("| Guard volume cap | ").append(PlumblineRuntime.guardMaxVolume).append(" |\n");
         sb.append("| Sable's own cap | 125000000 |\n\n");
 
+        long narrowSeen = Observations.narrowSeen();
+        Map<String, AtomicLong> unions = Observations.narrowedUnions();
+        sb.append("**Sweep narrowing: ").append(narrowSeen).append(" sweep(s) seen, ")
+          .append(Observations.narrowTotal()).append(" narrowed to the current pose, across ")
+          .append(unions.size()).append(" distinct union(s)**\n\n");
+        if (narrowSeen == 0L) {
+            sb.append("_This injection is optional and did not apply. Plumbline is running on the\n");
+            sb.append("guard alone, which drops the whole pass instead of half of it._\n\n");
+        } else if (unions.isEmpty()) {
+            sb.append("_Narrowing is live and no sweep needed it._\n\n");
+        } else {
+            sb.append("| union that was too large | hits |\n|---|---|\n");
+            for (Map.Entry<String, AtomicLong> e : unions.entrySet()) {
+                sb.append("| `").append(e.getKey()).append("` | ").append(e.getValue().get()).append(" |\n");
+            }
+            sb.append('\n');
+        }
+
         Map<String, AtomicLong> regions = Observations.guardRegions();
         long seen = Observations.guardSeen();
         sb.append("**Guard: ").append(seen).append(" collision pass(es) seen, ")
@@ -72,7 +90,7 @@ public final class PlumblineCommand {
             sb.append("_The guard was never consulted. Either no entity moved near a sub-level\n");
             sb.append("during this session, or the mixin did not apply._\n");
         } else if (regions.isEmpty()) {
-            sb.append("_Guard is live and nothing was oversized._\n");
+            sb.append("_Guard is live and nothing reached it._\n");
         } else {
             sb.append("| region (min -> max, sub-level local space) | hits |\n|---|---|\n");
             for (Map.Entry<String, AtomicLong> e : regions.entrySet()) {

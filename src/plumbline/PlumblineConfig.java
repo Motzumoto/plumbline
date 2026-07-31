@@ -28,6 +28,21 @@ public final class PlumblineConfig {
             "raise this and please open an issue with the numbers from /plumbline report.")
         .defineInRange("guardMaxVolume", 262_144L, 4_096L, Long.MAX_VALUE);
 
+    public static final ModConfigSpec.BooleanValue NARROW_SWEEP = B
+        .comment(
+            "When a collision sweep would exceed guardMaxVolume, collide against the",
+            "sub-level's current pose only rather than skipping the pass entirely.",
+            "",
+            "Sable builds the region by unioning the entity's box as seen from the",
+            "sub-level's previous pose with the same box at its current pose. Only the union",
+            "is huge; either half is about entity sized. Keeping the current half means",
+            "collision still works, and what is lost is tunnelling protection across the",
+            "movement between the two poses.",
+            "",
+            "Turn this off to get the older behaviour, where an oversized sweep meant no",
+            "sub-level collision at all for that pass.")
+        .define("narrowSweep", true);
+
     public static final ModConfigSpec.BooleanValue LOG_REGIONS = B
         .comment("Log each distinct oversized region the guard catches.",
                  "Worth leaving on, it is what /plumbline report has to work with.")
@@ -43,6 +58,7 @@ public final class PlumblineConfig {
         try {
             PlumblineRuntime.enabled = ENABLED.get();
             PlumblineRuntime.guardMaxVolume = GUARD_MAX_VOLUME.get();
+            PlumblineRuntime.narrowSweep = NARROW_SWEEP.get();
             PlumblineRuntime.logRegions = LOG_REGIONS.get();
         } catch (IllegalStateException ignored) {
             // config not loaded yet, defaults in PlumblineRuntime stay in force

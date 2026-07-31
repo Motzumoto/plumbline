@@ -25,6 +25,12 @@ public final class PlumblineRuntime {
      */
     public static volatile long guardMaxVolume = 262_144L;
 
+    /**
+     * Narrow an oversized sweep to the sub-level's current pose instead of letting the
+     * guard drop the whole pass. Keeps collision working. See the mixin for the trade.
+     */
+    public static volatile boolean narrowSweep = true;
+
     /** Log each distinct oversized region the guard catches. */
     public static volatile boolean logRegions = true;
 }

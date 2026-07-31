@@ -36,16 +36,27 @@ above it was six blazes near a parked airship.
 
 ## What Plumbline does
 
-One mixin. It measures the union before step 6 and returns an empty iterable when the
-region is larger than the cap. The loop finds nothing, no sub-level collision is applied
-on that pass, and the entity moves normally.
+Two changes to the same method, one that fixes it and one that catches what the first
+one misses.
 
-Sable already does this. It compares the same volume against 125,000,000 and logs
-`Enormous local sub-level collision bounds, quitting.` The problem is only the number: the
-57.9 million case above went straight through that ceiling and still froze the server for
-three and a half minutes. Plumbline is the same test at 262,144.
+**Narrowing** happens at step 5. Only the union is enormous. `box(lastPose)` and
+`box(currentPose)` are each about the size of the entity, because that is what they are.
+So when the union would exceed the cap, Plumbline hands back the current-pose box on its
+own instead. Collision against where the sub-level actually is keeps working. What is
+given up is the sweep back to where it used to be, which is the part that stops an entity
+tunnelling through a fast rotation.
 
-So this is a one line disagreement about a constant, wearing a mod as a hat.
+**The guard** is the fallback at step 6. If a region still comes through oversized, it
+returns an empty iterable and the pass finds nothing. That does cost you collision for
+that pass, which is why it is second and not first.
+
+Sable already has the equivalent of the guard. It compares the same volume against
+125,000,000 and logs `Enormous local sub-level collision bounds, quitting.` The problem is
+the number: the 57.9 million case above went straight through that ceiling and still froze
+the server for three and a half minutes.
+
+The narrowing is the part that is actually new. Skipping a pass is a decision Sable already
+knows how to make; keeping half of it is not.
 
 ## On that constant
 
@@ -83,7 +94,15 @@ fine, and those deserve different replies.
 |---|---|---|
 | `enabled` | `true` | master switch, still counts passes when off |
 | `guardMaxVolume` | `262144` | largest region a collision pass may walk |
+| `narrowSweep` | `true` | keep the current pose instead of dropping the pass |
 | `logRegions` | `true` | log each distinct oversized region once |
+
+Turning `narrowSweep` off gives the 1.0.0 behaviour, where an oversized sweep meant no
+sub-level collision at all for that pass.
+
+The narrowing injection is optional. If a future Sable reshapes that method it will simply
+not apply, and the mod runs on the guard alone rather than refusing to load. `/plumbline
+report` prints how many sweeps it saw, so nought means it never attached.
 
 ## Requirements
 
